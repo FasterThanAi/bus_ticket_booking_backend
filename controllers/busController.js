@@ -129,5 +129,54 @@ busController.cancelTicket = async (req, res) => {
         res.status(500).json({ message: 'Server error while cancelling ticket' });
     }
 };
+/**
+ * @desc    Get full details for a single booking
+ * @route   GET /api/booking/:bookingId
+ * @access  Protected
+ */
+busController.getBookingDetails = async (req, res) => {
+    try {
+        const { bookingId } = req.params;
+        const userId = req.user.id; // From 'protect' middleware
+
+        // 1. Get the main booking details
+        const bookingSql = `
+            SELECT 
+                b.BookingID, b.NumOfSeats, b.TotalAmount, b.Status, b.BookingDate,
+                s.DepartureTime, s.ArrivalTime, s.Fare,
+                r.Source, r.Destination,
+                bu.RegNumber, bu.BusType
+            FROM Booking b
+            JOIN Schedule s ON b.ScheduleID = s.ScheduleID
+            JOIN Route r ON s.RouteID = r.RouteID
+            JOIN Bus bu ON s.BusID = bu.BusID
+            WHERE b.BookingID = ? AND b.UserID = ?;
+        `;
+        
+        const [bookingResult] = await pool.query(bookingSql, [bookingId, userId]);
+
+        if (bookingResult.length === 0) {
+            return res.status(404).json({ message: 'Booking not found or user not authorized.' });
+        }
+
+        // 2. Get the passenger details for this booking
+        const passengerSql = `
+            SELECT Name, Age, Gender, SeatNumber 
+            FROM Passenger 
+            WHERE BookingID = ?;
+        `;
+        const [passengers] = await pool.query(passengerSql, [bookingId]);
+
+        // 3. Combine and send the response
+        res.json({
+            details: bookingResult[0],
+            passengers: passengers
+        });
+
+    } catch (err) {
+        console.error('Error in getBookingDetails:', err);
+        res.status(500).json({ message: 'Server error fetching booking details' });
+    }
+};
 
 module.exports = busController;

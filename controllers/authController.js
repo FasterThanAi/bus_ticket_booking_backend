@@ -67,7 +67,8 @@ authController.loginUser = async (req, res) => {
                 id: user.UserID,
                 name: user.Name,
                 email: user.Email,
-                userType: user.UserType
+                userType: user.UserType,
+                phone: user.Phone // <-- ADD THIS LINE
             }
         };
 

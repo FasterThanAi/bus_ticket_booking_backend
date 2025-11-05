@@ -27,5 +27,5 @@ router.get('/bookings/:userId', protect, busController.getMyBookings);
 // @route   POST /api/cancel
 // @desc    Cancel a ticket (Protected)
 router.post('/cancel', protect, busController.cancelTicket);
-
+router.get('/booking/:bookingId', protect, busController.getBookingDetails);
 module.exports = router;
